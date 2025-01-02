@@ -488,12 +488,12 @@ def main(json_file_path="data.json"):
 
                     # Convert the frame to RGB for displaying in Streamlit
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    st_frame.image(frame_rgb, channels="RGB", use_column_width=False, width=300)  # Show the camera feed
+                    st_frame.image(frame_rgb, channels="RGB", width=300)  # Show the camera feed
 
                     # Check if the button was pressed
                     if capture_image:
                         image = Image.fromarray(frame_rgb)  # Convert to PIL image
-                        st.image(image, caption="Captured Image", use_column_width=False, width=300)  # Show captured image
+                        st.image(image, caption="Captured Image", width=300)  # Show captured image
                         break
 
                 cap.release() 
@@ -672,12 +672,12 @@ def main(json_file_path="data.json"):
 
                     # Convert the frame to RGB for displaying in Streamlit
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    st_frame.image(frame_rgb, channels="RGB", use_column_width=False, width=300)  # Show the camera feed
+                    st_frame.image(frame_rgb, channels="RGB", width=300)  # Show the camera feed
 
                     # Check if the button was pressed
                     if capture_image:
                         image = Image.fromarray(frame_rgb)  # Convert to PIL image
-                        st.image(image, caption="Captured Image", use_column_width=False, width=300)  # Show captured image
+                        st.image(image, caption="Captured Image", width=300)  # Show captured image
                         break
 
                 cap.release() 
@@ -831,7 +831,7 @@ def main(json_file_path="data.json"):
                 uploaded_file = st.file_uploader("", type=["jpg", "png", "jpeg"])  # File uploader box styling
                 if uploaded_file is not None:
                     image = Image.open(uploaded_file)
-                    st.image(image, caption="Uploaded Image", use_column_width=False, width=300)  # Adjust the image size
+                    st.image(image, caption="Uploaded Image", width=300)  # Adjust the image size
 
             # Capture from camera section with custom button styling
             elif capture_method == "Capture image from camera":
@@ -849,12 +849,12 @@ def main(json_file_path="data.json"):
 
                     # Convert the frame to RGB for displaying in Streamlit
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    st_frame.image(frame_rgb, channels="RGB", use_column_width=False, width=300)  # Show the camera feed
+                    st_frame.image(frame_rgb, channels="RGB", width=300)  # Show the camera feed
 
                     # Check if the button was pressed
                     if capture_image:
                         image = Image.fromarray(frame_rgb)  # Convert to PIL image
-                        st.image(image, caption="Captured Image", use_column_width=False, width=300)  # Show captured image
+                        st.image(image, caption="Captured Image",  width=300)  # Show captured image
                         break
 
                 cap.release() 
