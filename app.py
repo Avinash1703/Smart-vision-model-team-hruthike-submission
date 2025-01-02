@@ -477,7 +477,7 @@ def main(json_file_path="data.json"):
                 capture_image = st.button("Capture Image", key="capture_btn", help="Click to capture an image")
 
                 # Initialize the camera feed
-                cap = cv2.VideoCapture(0)
+                cap = cv2.VideoCapture(1)
                 st_frame = st.empty()  # Create a placeholder for the video frame
 
                 while True:
