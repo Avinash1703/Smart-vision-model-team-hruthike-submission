@@ -27,64 +27,114 @@ load_dotenv()
 
 from typing import Union
 
-class VideoProcessor:
-    def __init__(self):
-        self.frame_queue = queue.Queue(maxsize=1)
-        
-    def recv(self, frame: av.VideoFrame) -> Union[av.VideoFrame, None]:
-        try:
-            img = frame.to_ndarray(format="bgr24")
-            # Keep only the most recent frame
-            try:
-                self.frame_queue.get_nowait()
-            except queue.Empty:
-                pass
-            self.frame_queue.put(img)
-            return frame
-        except Exception as e:
-            print(f"Error in recv: {e}")
-            return None
+import streamlit.components.v1 as components
+import base64
+import io
 
-def camera_input_webrtc():
-    """Function to handle camera input using streamlit-webrtc"""
+def camera_input_client():
+    """Function to handle camera input using client-side camera"""
+    # HTML and JavaScript for camera capture
+    camera_html = """
+        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
+            <video id="video" width="640" height="480" autoplay style="border-radius: 10px; margin-bottom: 10px;"></video>
+            <button id="snap" style="
+                background-color: #4CAF50;
+                border: none;
+                color: white;
+                padding: 12px 30px;
+                text-align: center;
+                text-decoration: none;
+                font-size: 16px;
+                margin: 4px 2px;
+                cursor: pointer;
+                border-radius: 8px;">Capture Image</button>
+            <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+        </div>
+
+        <script>
+            var video = document.getElementById('video');
+            var canvas = document.getElementById('canvas');
+            var context = canvas.getContext('2d');
+            var snap = document.getElementById('snap');
+            
+            // Request camera with preferred settings
+            const constraints = {
+                video: {
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    facingMode: 'environment'  // Prefer back camera
+                },
+                audio: false
+            };
+
+            // Access the user's camera
+            async function setupCamera() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    video.srcObject = stream;
+                    return new Promise((resolve) => {
+                        video.onloadedmetadata = () => {
+                            resolve(video);
+                        };
+                    });
+                } catch (error) {
+                    console.error('Error accessing camera:', error);
+                    // Show error message to user
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.color = 'red';
+                    errorDiv.style.padding = '10px';
+                    errorDiv.innerText = 'Error accessing camera. Please make sure you have granted camera permissions.';
+                    video.parentElement.insertBefore(errorDiv, video);
+                }
+            }
+
+            setupCamera();
+
+            // Capture image when button is clicked
+            snap.addEventListener('click', function() {
+                context.drawImage(video, 0, 0, 640, 480);
+                
+                // Convert canvas to base64 image with high quality
+                var imageData = canvas.toDataURL('image/jpeg', 0.95);
+                
+                // Send to Streamlit
+                window.Streamlit.setComponentValue(imageData);
+            });
+        </script>
+    """
+
+    # Custom styling for the camera container
+    st.markdown("""
+        <style>
+            .camera-container {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                padding: 20px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Use Streamlit components to inject HTML
+    st.markdown('<div class="camera-container">', unsafe_allow_html=True)
+    captured_image = components.html(camera_html, height=580)
+    st.markdown('</div>', unsafe_allow_html=True)
     
-    webrtc_ctx = webrtc_streamer(
-        key="camera",
-        mode=WebRtcMode.SENDRECV,
-        rtc_configuration=RTCConfiguration(
-            {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
-        ),
-        video_processor_factory=VideoProcessor,
-        media_stream_constraints={
-            "video": {
-                "width": {"ideal": 640},
-                "height": {"ideal": 480},
-                "frameRate": {"ideal": 15}
-            },
-            "audio": False
-        },
-        async_processing=True,
-    )
-    
-    captured_image = None
-    
-    if webrtc_ctx.video_processor:
-        if st.button("Capture", key="capture_btn"):
-            try:
-                # Get the latest frame from the queue
-                frame = webrtc_ctx.video_processor.frame_queue.get(timeout=1.0)
-                if frame is not None:
-                    # Convert BGR to RGB for PIL
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR24_RGB)
-                    captured_image = Image.fromarray(frame_rgb)
-                    st.image(captured_image, caption="Captured Image", width=300)
-                    st.success("Image captured successfully!")
-            except queue.Empty:
-                st.warning("No frame available. Please try again.")
-            except Exception as e:
-                st.error(f"Error capturing image: {str(e)}")
-    
-    return captured_image
+    if captured_image:
+        try:
+            # Remove base64 prefix
+            base64_str = captured_image.split(",")[1]
+            # Convert to bytes
+            img_bytes = base64.b64decode(base64_str)
+            # Convert to PIL Image
+            image = Image.open(io.BytesIO(img_bytes))
+            return image
+        except Exception as e:
+            st.error(f"Error processing captured image: {str(e)}")
+            return None
+            
+    return None
 fruit_vegetable_mapping = {
     0: "apples",
     1: "banana",
