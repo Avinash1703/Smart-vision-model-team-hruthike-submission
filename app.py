@@ -1081,23 +1081,20 @@ from PIL import Image
 from utils import *
 import queue
 from PIL import Image, ImageEnhance
-from database import initialize_database, create_account, check_login , insert_freshness_record, insert_ocr_record , insert_item_counting_record
+from database import initialize_database, create_account, check_login, insert_freshness_record, insert_ocr_record, insert_item_counting_record
 import cv2
+from typing import Union
+import streamlit.components.v1 as components
+import base64
 
-# Initialize session state
+# **1. Set Page Configuration First**
+st.set_page_config(page_title="SMART VISION", layout="wide", page_icon="🍎")
+
+# **2. Initialize Session State After Page Config**
 if "user_index" not in st.session_state:
     st.session_state["user_index"] = 0
 
 load_dotenv()
-
-from typing import Union
-
-import streamlit.components.v1 as components
-import base64
-import io
-
-# Remove the custom camera_input_client function
-
 fruit_vegetable_mapping = {
     0: "apples",
     1: "banana",
