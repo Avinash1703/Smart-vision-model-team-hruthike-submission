@@ -35,7 +35,7 @@ SMART VISION is a web application designed to help users detect the freshness of
 
 3. Create a `.env` file with your Google API key:
    ```
-   GOOGLE_API_KEY=<your_api_key>
+   OPENAI_API_KEY=<your_api_key>
    ```
 
 4. Ensure `model_fruit_freshness.pth` is placed in the appropriate directory for model loading.
