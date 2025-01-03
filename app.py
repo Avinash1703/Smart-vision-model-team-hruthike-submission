@@ -9,7 +9,9 @@ import numpy as np
 import torch.nn as nn
 import pickle
 import time
-# import google.generativeai as genai
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+import av
+import io
 from PIL import Image
 from utils import *
 #import pytesseract
@@ -23,6 +25,32 @@ load_dotenv()
 #genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 #OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
+class VideoTransformer(VideoTransformerBase):
+    def __init__(self):
+        self.frame = None
+        self.capture_requested = False
+        
+    def transform(self, frame):
+        self.frame = frame.to_ndarray(format="rgb24")
+        return frame
+
+def camera_input_webrtc():
+    """Function to handle camera input using streamlit-webrtc"""
+    webrtc_ctx = webrtc_streamer(
+        key="camera",
+        video_transformer_factory=VideoTransformer,
+        media_stream_constraints={"video": True, "audio": False},
+    )
+    
+    captured_image = None
+    if webrtc_ctx.video_transformer:
+        if st.button("Capture Image"):
+            if webrtc_ctx.video_transformer.frame is not None:
+                # Convert the frame to PIL Image
+                captured_image = Image.fromarray(webrtc_ctx.video_transformer.frame)
+                st.image(captured_image, caption="Captured Image", width=300)
+    
+    return captured_image
 fruit_vegetable_mapping = {
     0: "apples",
     1: "banana",
@@ -474,32 +502,34 @@ def main(json_file_path="data.json"):
 
             # Capture from camera section with custom button styling
             elif capture_method == "Capture image from camera":
-                capture_image = st.button("Capture Image", key="capture_btn", help="Click to capture an image")
+                # capture_image = st.button("Capture Image", key="capture_btn", help="Click to capture an image")
 
-                # Initialize the camera feed
-                cap = cv2.VideoCapture(2)
-                st_frame = st.empty()  # Create a placeholder for the video frame
+                # # Initialize the camera feed
+                # cap = cv2.VideoCapture(2)
+                # st_frame = st.empty()  # Create a placeholder for the video frame
 
-                while True:
-                    ret, frame = cap.read()
-                    if not ret:
-                        st.warning("Failed to access the camera.")
-                        break
+                # while True:
+                #     ret, frame = cap.read()
+                #     if not ret:
+                #         st.warning("Failed to access the camera.")
+                #         break
 
-                    # Convert the frame to RGB for displaying in Streamlit
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    st_frame.image(frame_rgb, channels="RGB", width=300)  # Show the camera feed
+                #     # Convert the frame to RGB for displaying in Streamlit
+                #     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                #     st_frame.image(frame_rgb, channels="RGB", width=300)  # Show the camera feed
 
-                    # Check if the button was pressed
-                    if capture_image:
-                        image = Image.fromarray(frame_rgb)  # Convert to PIL image
-                        st.image(image, caption="Captured Image", width=300)  # Show captured image
-                        break
+                #     # Check if the button was pressed
+                #     if capture_image:
+                #         image = Image.fromarray(frame_rgb)  # Convert to PIL image
+                #         st.image(image, caption="Captured Image", width=300)  # Show captured image
+                #         break
 
-                cap.release() 
+                # cap.release() 
+                image = camera_input_webrtc()
 
             # Display predicted freshness information if image is available
             if image is not None:
+                st.success("Image captured successfully!")
                 model = load_resource()
 
                 if product_type == "Fruit/Vegetable":
@@ -658,30 +688,30 @@ def main(json_file_path="data.json"):
 
             # Capture from camera section with custom button styling
             elif capture_method == "Capture image from camera":
-                capture_image = st.button("Capture Image", key="capture_btn", help="Click to capture an image")
+                # capture_image = st.button("Capture Image", key="capture_btn", help="Click to capture an image")
 
-                # Initialize the camera feed
-                cap = cv2.VideoCapture(2)
-                st_frame = st.empty()  # Create a placeholder for the video frame
+                # # Initialize the camera feed
+                # cap = cv2.VideoCapture(2)
+                # st_frame = st.empty()  # Create a placeholder for the video frame
 
-                while True:
-                    ret, frame = cap.read()
-                    if not ret:
-                        st.warning("Failed to access the camera.")
-                        break
+                # while True:
+                #     ret, frame = cap.read()
+                #     if not ret:
+                #         st.warning("Failed to access the camera.")
+                #         break
 
-                    # Convert the frame to RGB for displaying in Streamlit
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    st_frame.image(frame_rgb, channels="RGB", width=300)  # Show the camera feed
+                #     # Convert the frame to RGB for displaying in Streamlit
+                #     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                #     st_frame.image(frame_rgb, channels="RGB", width=300)  # Show the camera feed
 
-                    # Check if the button was pressed
-                    if capture_image:
-                        image = Image.fromarray(frame_rgb)  # Convert to PIL image
-                        st.image(image, caption="Captured Image", width=300)  # Show captured image
-                        break
+                #     # Check if the button was pressed
+                #     if capture_image:
+                #         image = Image.fromarray(frame_rgb)  # Convert to PIL image
+                #         st.image(image, caption="Captured Image", width=300)  # Show captured image
+                #         break
 
-                cap.release() 
-
+                # cap.release() 
+            image = camera_input_webrtc()
             # Display detected item information if image is available
             if image is not None:
                 try:
@@ -835,29 +865,30 @@ def main(json_file_path="data.json"):
 
             # Capture from camera section with custom button styling
             elif capture_method == "Capture image from camera":
-                capture_image = st.button("Capture Image", key="capture_btn", help="Click to capture an image")
+                # capture_image = st.button("Capture Image", key="capture_btn", help="Click to capture an image")
 
-                # Initialize the camera feed
-                cap = cv2.VideoCapture(2)
-                st_frame = st.empty()  # Create a placeholder for the video frame
+                # # Initialize the camera feed
+                # cap = cv2.VideoCapture(2)
+                # st_frame = st.empty()  # Create a placeholder for the video frame
 
-                while True:
-                    ret, frame = cap.read()
-                    if not ret:
-                        st.warning("Failed to access the camera.")
-                        break
+                # while True:
+                #     ret, frame = cap.read()
+                #     if not ret:
+                #         st.warning("Failed to access the camera.")
+                #         break
 
-                    # Convert the frame to RGB for displaying in Streamlit
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    st_frame.image(frame_rgb, channels="RGB", width=300)  # Show the camera feed
+                #     # Convert the frame to RGB for displaying in Streamlit
+                #     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                #     st_frame.image(frame_rgb, channels="RGB", width=300)  # Show the camera feed
 
-                    # Check if the button was pressed
-                    if capture_image:
-                        image = Image.fromarray(frame_rgb)  # Convert to PIL image
-                        st.image(image, caption="Captured Image",  width=300)  # Show captured image
-                        break
+                #     # Check if the button was pressed
+                #     if capture_image:
+                #         image = Image.fromarray(frame_rgb)  # Convert to PIL image
+                #         st.image(image, caption="Captured Image",  width=300)  # Show captured image
+                #         break
 
-                cap.release() 
+                # cap.release() 
+                image = camera_input_webrtc()
 
             # Display extracted information if image is available
             if image is not None:
