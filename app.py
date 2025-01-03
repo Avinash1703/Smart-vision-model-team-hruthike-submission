@@ -25,29 +25,40 @@ load_dotenv()
 #genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 #OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-class VideoTransformer(VideoTransformerBase):
-    def __init__(self):
+from typing import Union
+
+# Define RTC configuration with STUN servers
+RTC_CONFIGURATION = RTCConfiguration(
+    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+)
+
+class VideoProcessor:
+    def __init__(self) -> None:
         self.frame = None
-        self.capture_requested = False
         
-    def transform(self, frame):
-        self.frame = frame.to_ndarray(format="rgb24")
+    def recv(self, frame: av.VideoFrame) -> Union[av.VideoFrame, None]:
+        img = frame.to_ndarray(format="rgb24")
+        self.frame = img
         return frame
 
 def camera_input_webrtc():
     """Function to handle camera input using streamlit-webrtc"""
-    webrtc_ctx = webrtc_streamer(
+    ctx = webrtc_streamer(
         key="camera",
-        video_transformer_factory=VideoTransformer,
+        mode=WebRtcMode.SENDRECV,
+        rtc_configuration=RTC_CONFIGURATION,
+        video_processor_factory=VideoProcessor,
         media_stream_constraints={"video": True, "audio": False},
+        async_processing=True,
     )
     
     captured_image = None
-    if webrtc_ctx.video_transformer:
+    if ctx.video_processor:
         if st.button("Capture Image"):
-            if webrtc_ctx.video_transformer.frame is not None:
+            if ctx.video_processor.frame is not None:
                 # Convert the frame to PIL Image
-                captured_image = Image.fromarray(webrtc_ctx.video_transformer.frame)
+                captured_frame = ctx.video_processor.frame
+                captured_image = Image.fromarray(captured_frame)
                 st.image(captured_image, caption="Captured Image", width=300)
     
     return captured_image
