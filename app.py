@@ -14,7 +14,7 @@ import av
 import io
 from PIL import Image
 from utils import *
-#import pytesseract
+import queue
 from PIL import Image, ImageEnhance
 from database import initialize_database, create_account, check_login , insert_freshness_record,insert_ocr_record , insert_item_counting_record
 import cv2
