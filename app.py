@@ -9,7 +9,7 @@ import numpy as np
 import torch.nn as nn
 import pickle
 import time
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase,WebRtcMode
 import av
 import io
 from PIL import Image
@@ -28,27 +28,38 @@ load_dotenv()
 from typing import Union
 
 # Define RTC configuration with STUN servers
-RTC_CONFIGURATION = RTCConfiguration(
-    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
-)
-
-class VideoProcessor:
-    def __init__(self) -> None:
-        self.frame = None
-        
-    def recv(self, frame: av.VideoFrame) -> Union[av.VideoFrame, None]:
-        img = frame.to_ndarray(format="rgb24")
-        self.frame = img
-        return frame
-
 def camera_input_webrtc():
     """Function to handle camera input using streamlit-webrtc"""
+    
+    # Define WebRTC configuration with STUN servers as a dictionary
+    rtc_configuration = {
+        "iceServers": [
+            {"urls": ["stun:stun.l.google.com:19302"]}
+        ]
+    }
+    
+    class VideoProcessor:
+        def __init__(self) -> None:
+            self.frame = None
+            
+        def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+            img = frame.to_ndarray(format="rgb24")
+            self.frame = img
+            return frame
+    
     ctx = webrtc_streamer(
         key="camera",
         mode=WebRtcMode.SENDRECV,
-        rtc_configuration=RTC_CONFIGURATION,
+        rtc_configuration=rtc_configuration,  # Pass as dictionary
         video_processor_factory=VideoProcessor,
-        media_stream_constraints={"video": True, "audio": False},
+        media_stream_constraints={
+            "video": {
+                "width": {"ideal": 640},
+                "height": {"ideal": 480},
+                "frameRate": {"ideal": 15}
+            },
+            "audio": False
+        },
         async_processing=True,
     )
     
@@ -56,7 +67,6 @@ def camera_input_webrtc():
     if ctx.video_processor:
         if st.button("Capture Image"):
             if ctx.video_processor.frame is not None:
-                # Convert the frame to PIL Image
                 captured_frame = ctx.video_processor.frame
                 captured_image = Image.fromarray(captured_frame)
                 st.image(captured_image, caption="Captured Image", width=300)
