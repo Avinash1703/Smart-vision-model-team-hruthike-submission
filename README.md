@@ -13,7 +13,7 @@ SMART VISION is a web application designed to help users detect the freshness of
 ## Tech Stack
 - **Frontend**: [Streamlit](https://streamlit.io/)
 - **Backend**: Python, PyTorch, torchvision
-- **Database**: JSON-based user management
+- **Database**: SQLITE Database
 - **Libraries**: 
   - `torch` for deep learning model inference
   - `pytesseract` for OCR processing
