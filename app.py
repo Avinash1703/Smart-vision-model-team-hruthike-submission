@@ -609,7 +609,7 @@ def main(json_file_path="data.json"):
                 #         break
 
                 # cap.release() 
-                image = camera_input_webrtc()
+                image = camera_input_client()
 
             # Display predicted freshness information if image is available
             if image is not None:
@@ -795,7 +795,7 @@ def main(json_file_path="data.json"):
                 #         break
 
                 # cap.release() 
-                image = camera_input_webrtc()
+                image = camera_input_client()
             # Display detected item information if image is available
             if image is not None:
                 try:
@@ -972,7 +972,7 @@ def main(json_file_path="data.json"):
                 #         break
 
                 # cap.release() 
-                image = camera_input_webrtc()
+                image = camera_input_client()
 
             # Display extracted information if image is available
             if image is not None:
