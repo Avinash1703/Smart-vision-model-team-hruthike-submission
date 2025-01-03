@@ -711,7 +711,7 @@ def main(json_file_path="data.json"):
                 #         break
 
                 # cap.release() 
-            image = camera_input_webrtc()
+                image = camera_input_webrtc()
             # Display detected item information if image is available
             if image is not None:
                 try:
