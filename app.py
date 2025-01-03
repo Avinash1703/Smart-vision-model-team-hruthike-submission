@@ -49,91 +49,76 @@ def camera_input_client():
                 cursor: pointer;
                 border-radius: 8px;">Capture Image</button>
             <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+            <div id="error-message" style="color: red; padding: 10px;"></div>
         </div>
 
         <script>
-            var video = document.getElementById('video');
-            var canvas = document.getElementById('canvas');
-            var context = canvas.getContext('2d');
-            var snap = document.getElementById('snap');
+            const videoElement = document.getElementById('video');
+            const canvasElement = document.getElementById('canvas');
+            const captureButton = document.getElementById('snap');
+            const errorMessageDiv = document.getElementById('error-message');
             
             // Request camera with preferred settings
             const constraints = {
                 video: {
                     width: { ideal: 640 },
                     height: { ideal: 480 },
-                    facingMode: 'environment'  // Prefer back camera
+                    facingMode: 'environment'
                 },
                 audio: false
             };
 
             // Access the user's camera
-            async function setupCamera() {
+            async function startCamera() {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    video.srcObject = stream;
-                    return new Promise((resolve) => {
-                        video.onloadedmetadata = () => {
-                            resolve(video);
-                        };
-                    });
+                    videoElement.srcObject = stream;
                 } catch (error) {
                     console.error('Error accessing camera:', error);
-                    // Show error message to user
-                    const errorDiv = document.createElement('div');
-                    errorDiv.style.color = 'red';
-                    errorDiv.style.padding = '10px';
-                    errorDiv.innerText = 'Error accessing camera. Please make sure you have granted camera permissions.';
-                    video.parentElement.insertBefore(errorDiv, video);
+                    errorMessageDiv.textContent = 'Error accessing camera. Please ensure camera permissions are granted.';
                 }
             }
 
-            setupCamera();
+            // Start camera when page loads
+            startCamera();
 
             // Capture image when button is clicked
-            snap.addEventListener('click', function() {
-                context.drawImage(video, 0, 0, 640, 480);
+            captureButton.addEventListener('click', function() {
+                const context = canvasElement.getContext('2d');
+                context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
                 
-                // Convert canvas to base64 image with high quality
-                var imageData = canvas.toDataURL('image/jpeg', 0.95);
+                // Convert to base64 and send to Streamlit
+                const imageData = canvasElement.toDataURL('image/jpeg', 0.95);
                 
-                // Send to Streamlit
-                window.Streamlit.setComponentValue(imageData);
+                // Send data to Streamlit
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue',
+                    data: imageData
+                }, '*');
             });
         </script>
     """
 
-    # Custom styling for the camera container
-    st.markdown("""
-        <style>
-            .camera-container {
-                background: rgba(255, 255, 255, 0.1);
-                border-radius: 10px;
-                padding: 20px;
-                margin-bottom: 20px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Use Streamlit components to inject HTML
-    st.markdown('<div class="camera-container">', unsafe_allow_html=True)
-    captured_image = components.html(camera_html, height=580)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Use components.html to create the component and get the captured image data
+    captured_image = components.html(camera_html, height=600)
     
     if captured_image:
         try:
-            # Remove base64 prefix
-            base64_str = captured_image.split(",")[1]
-            # Convert to bytes
-            img_bytes = base64.b64decode(base64_str)
-            # Convert to PIL Image
-            image = Image.open(io.BytesIO(img_bytes))
-            return image
+            # Process the captured image
+            if isinstance(captured_image, str) and captured_image.startswith('data:image/jpeg;base64,'):
+                # Extract the base64 data
+                img_data = captured_image.replace('data:image/jpeg;base64,', '')
+                # Convert to bytes
+                img_bytes = base64.b64decode(img_data)
+                # Create PIL Image
+                image = Image.open(io.BytesIO(img_bytes))
+                # Display the captured image
+                st.image(image, caption="Captured Image", width=300)
+                return image
         except Exception as e:
-            st.error(f"Error processing captured image: {str(e)}")
+            st.error(f"Error processing image: {str(e)}")
             return None
-            
+    
     return None
 fruit_vegetable_mapping = {
     0: "apples",
@@ -585,7 +570,7 @@ def main(json_file_path="data.json"):
                     st.image(image, caption="Uploaded Image", use_column_width=False, width=300)  # Adjust the image size
 
             # Capture from camera section with custom button styling
-            elif capture_method == "Capture image from camera":
+            #elif capture_method == "Capture image from camera":
                 # capture_image = st.button("Capture Image", key="capture_btn", help="Click to capture an image")
 
                 # # Initialize the camera feed
@@ -609,7 +594,15 @@ def main(json_file_path="data.json"):
                 #         break
 
                 # cap.release() 
-                image = camera_input_client()
+            elif capture_method == "Capture image from camera":
+                try:
+                    image = camera_input_client()
+                    if image is not None:
+                        # The image is already displayed in the function
+                        continue_processing = True
+                except Exception as e:
+                    st.error(f"Camera error: {str(e)}")
+                    continue_processing = False
 
             # Display predicted freshness information if image is available
             if image is not None:
@@ -772,6 +765,14 @@ def main(json_file_path="data.json"):
 
             # Capture from camera section with custom button styling
             elif capture_method == "Capture image from camera":
+                try:
+                    image = camera_input_client()
+                    if image is not None:
+                        # The image is already displayed in the function
+                        continue_processing = True
+                except Exception as e:
+                    st.error(f"Camera error: {str(e)}")
+                    continue_processing = False
                 # capture_image = st.button("Capture Image", key="capture_btn", help="Click to capture an image")
 
                 # # Initialize the camera feed
@@ -795,7 +796,7 @@ def main(json_file_path="data.json"):
                 #         break
 
                 # cap.release() 
-                image = camera_input_client()
+                #image = camera_input_client()
             # Display detected item information if image is available
             if image is not None:
                 try:
@@ -949,6 +950,14 @@ def main(json_file_path="data.json"):
 
             # Capture from camera section with custom button styling
             elif capture_method == "Capture image from camera":
+                try:
+                    image = camera_input_client()
+                    if image is not None:
+                        # The image is already displayed in the function
+                        continue_processing = True
+                except Exception as e:
+                    st.error(f"Camera error: {str(e)}")
+                    continue_processing = False
                 # capture_image = st.button("Capture Image", key="capture_btn", help="Click to capture an image")
 
                 # # Initialize the camera feed
@@ -972,7 +981,7 @@ def main(json_file_path="data.json"):
                 #         break
 
                 # cap.release() 
-                image = camera_input_client()
+                #image = camera_input_client()
 
             # Display extracted information if image is available
             if image is not None:
