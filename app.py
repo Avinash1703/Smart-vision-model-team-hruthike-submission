@@ -35,86 +35,104 @@ def camera_input_client():
     """Function to handle camera input using client-side camera"""
     # HTML and JavaScript for camera capture
     camera_html = """
-        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
-            <video id="video" width="640" height="480" autoplay style="border-radius: 10px; margin-bottom: 10px;"></video>
-            <button id="snap" style="
-                background-color: #4CAF50;
-                border: none;
-                color: white;
-                padding: 12px 30px;
-                text-align: center;
-                text-decoration: none;
-                font-size: 16px;
-                margin: 4px 2px;
-                cursor: pointer;
-                border-radius: 8px;">Capture Image</button>
-            <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
-            <div id="error-message" style="color: red; padding: 10px;"></div>
-        </div>
+        <!DOCTYPE html>
+        <html>
+        <body>
+            <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
+                <video id="video" width="640" height="480" autoplay playsinline style="border-radius: 10px; margin-bottom: 10px;"></video>
+                <button id="capture" style="
+                    background-color: #4CAF50;
+                    border: none;
+                    color: white;
+                    padding: 12px 30px;
+                    text-align: center;
+                    text-decoration: none;
+                    font-size: 16px;
+                    margin: 4px 2px;
+                    cursor: pointer;
+                    border-radius: 8px;">Capture Image</button>
+                <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+                <div id="error-message" style="color: red; padding: 10px;"></div>
+            </div>
 
-        <script>
-            const videoElement = document.getElementById('video');
-            const canvasElement = document.getElementById('canvas');
-            const captureButton = document.getElementById('snap');
-            const errorMessageDiv = document.getElementById('error-message');
-            
-            // Request camera with preferred settings
-            const constraints = {
-                video: {
-                    width: { ideal: 640 },
-                    height: { ideal: 480 },
-                    facingMode: 'environment'
-                },
-                audio: false
-            };
+            <script>
+                const video = document.getElementById('video');
+                const canvas = document.getElementById('canvas');
+                const captureButton = document.getElementById('capture');
+                const errorMessage = document.getElementById('error-message');
+                let stream = null;
 
-            // Access the user's camera
-            async function startCamera() {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    videoElement.srcObject = stream;
-                } catch (error) {
-                    console.error('Error accessing camera:', error);
-                    errorMessageDiv.textContent = 'Error accessing camera. Please ensure camera permissions are granted.';
+                // Function to initialize the camera
+                async function initCamera() {
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: {
+                                width: { ideal: 640 },
+                                height: { ideal: 480 },
+                                facingMode: { ideal: 'environment' }
+                            },
+                            audio: false
+                        });
+                        video.srcObject = stream;
+                        await video.play();
+                        errorMessage.textContent = '';
+                    } catch (err) {
+                        errorMessage.textContent = 'Error accessing camera: ' + err.message;
+                        console.error('Error:', err);
+                    }
                 }
-            }
 
-            // Start camera when page loads
-            startCamera();
+                // Initialize camera when page loads
+                initCamera();
 
-            // Capture image when button is clicked
-            captureButton.addEventListener('click', function() {
-                const context = canvasElement.getContext('2d');
-                context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-                
-                // Convert to base64 and send to Streamlit
-                const imageData = canvasElement.toDataURL('image/jpeg', 0.95);
-                
-                // Send data to Streamlit
-                window.parent.postMessage({
-                    type: 'streamlit:setComponentValue',
-                    data: imageData
-                }, '*');
-            });
-        </script>
+                // Function to capture image
+                captureButton.addEventListener('click', function() {
+                    try {
+                        const context = canvas.getContext('2d');
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        
+                        // Convert to base64
+                        const imageData = canvas.toDataURL('image/jpeg', 0.95);
+                        
+                        // Send to Streamlit
+                        window.Streamlit.setComponentValue(imageData);
+                    } catch (err) {
+                        errorMessage.textContent = 'Error capturing image: ' + err.message;
+                        console.error('Capture error:', err);
+                    }
+                });
+
+                // Cleanup when component is destroyed
+                window.addEventListener('beforeunload', () => {
+                    if (stream) {
+                        stream.getTracks().forEach(track => track.stop());
+                    }
+                });
+            </script>
+        </body>
+        </html>
     """
 
-    # Use components.html to create the component and get the captured image data
+    # Create the component
     captured_image = components.html(camera_html, height=600)
     
+    # Process the captured image
     if captured_image:
         try:
-            # Process the captured image
+            # Verify we have valid base64 image data
             if isinstance(captured_image, str) and captured_image.startswith('data:image/jpeg;base64,'):
                 # Extract the base64 data
-                img_data = captured_image.replace('data:image/jpeg;base64,', '')
+                base64_data = captured_image.split(',')[1]
                 # Convert to bytes
-                img_bytes = base64.b64decode(img_data)
+                image_bytes = base64.b64decode(base64_data)
                 # Create PIL Image
-                image = Image.open(io.BytesIO(img_bytes))
+                image = Image.open(io.BytesIO(image_bytes))
                 # Display the captured image
                 st.image(image, caption="Captured Image", width=300)
                 return image
+            else:
+                st.error("Invalid image data received")
+                return None
         except Exception as e:
             st.error(f"Error processing image: {str(e)}")
             return None
