@@ -27,15 +27,13 @@ load_dotenv()
 
 from typing import Union
 
-# Define RTC configuration with STUN servers
 class VideoProcessor:
-    def __init__(self) -> None:
+    def __init__(self):
         self.frame_queue = queue.Queue(maxsize=1)
-        self.result_queue = queue.Queue()
-
-    def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+        
+    def recv(self, frame: av.VideoFrame) -> Union[av.VideoFrame, None]:
         try:
-            img = frame.to_ndarray(format="rgb24")
+            img = frame.to_ndarray(format="bgr24")
             # Keep only the most recent frame
             try:
                 self.frame_queue.get_nowait()
@@ -45,58 +43,47 @@ class VideoProcessor:
             return frame
         except Exception as e:
             print(f"Error in recv: {e}")
-            return frame
+            return None
 
 def camera_input_webrtc():
-    """Enhanced WebRTC camera implementation with improved stability and performance"""
+    """Function to handle camera input using streamlit-webrtc"""
     
-    # Configure STUN servers
-    rtc_configuration = RTCConfiguration(
-        {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+    webrtc_ctx = webrtc_streamer(
+        key="camera",
+        mode=WebRtcMode.SENDRECV,
+        rtc_configuration=RTCConfiguration(
+            {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+        ),
+        video_processor_factory=VideoProcessor,
+        media_stream_constraints={
+            "video": {
+                "width": {"ideal": 640},
+                "height": {"ideal": 480},
+                "frameRate": {"ideal": 15}
+            },
+            "audio": False
+        },
+        async_processing=True,
     )
     
-    # Hold our final captured image
     captured_image = None
     
-    try:
-        # Create the WebRTC streamer context
-        ctx = webrtc_streamer(
-            key="camera_capture",
-            mode=WebRtcMode.SENDRECV,
-            rtc_configuration=rtc_configuration,
-            video_processor_factory=VideoProcessor,
-            media_stream_constraints={
-                "video": {
-                    "width": {"ideal": 640},
-                    "height": {"ideal": 480},
-                    "frameRate": {"ideal": 15}
-                },
-                "audio": False
-            },
-            async_processing=True,
-        )
-
-        # If the stream is active and we have a processor
-        if ctx.video_processor and ctx.state.playing:
-            if st.button("Capture Image", key="capture_btn"):
-                try:
-                    # Try to get the most recent frame
-                    frame = ctx.video_processor.frame_queue.get(timeout=1.0)
-                    if frame is not None:
-                        # Convert to PIL Image
-                        captured_image = Image.fromarray(frame)
-                        # Display the captured image
-                        st.image(captured_image, caption="Captured Image", width=300)
-                        st.success("Image captured successfully!")
-                except queue.Empty:
-                    st.warning("No frame available. Please try again.")
-                except Exception as e:
-                    st.error(f"Error capturing image: {str(e)}")
-                    
-    except Exception as e:
-        st.error(f"Error initializing camera: {str(e)}")
-        st.info("Please make sure you've granted camera permissions to the website.")
-        
+    if webrtc_ctx.video_processor:
+        if st.button("Capture", key="capture_btn"):
+            try:
+                # Get the latest frame from the queue
+                frame = webrtc_ctx.video_processor.frame_queue.get(timeout=1.0)
+                if frame is not None:
+                    # Convert BGR to RGB for PIL
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR24_RGB)
+                    captured_image = Image.fromarray(frame_rgb)
+                    st.image(captured_image, caption="Captured Image", width=300)
+                    st.success("Image captured successfully!")
+            except queue.Empty:
+                st.warning("No frame available. Please try again.")
+            except Exception as e:
+                st.error(f"Error capturing image: {str(e)}")
+    
     return captured_image
 fruit_vegetable_mapping = {
     0: "apples",
