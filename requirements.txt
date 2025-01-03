@@ -11,5 +11,5 @@ opencv-python-headless==4.10.0.84
 pillow
 SQLAlchemy==2.0.36
 sqlparse==0.5.3
-streamlit-webrtc
-av
+streamlit-webrtc>=0.45.0
+av-python
