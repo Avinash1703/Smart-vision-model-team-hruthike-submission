@@ -937,7 +937,6 @@ from database import (
     insert_ocr_record,
     insert_item_counting_record
 )
-import cv2
 from typing import Union
 import streamlit.components.v1 as components
 import base64
