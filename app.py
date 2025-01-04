@@ -1160,14 +1160,14 @@ def freshness_detector_page(model, fruit_vegetable_mapping, freshness_mapping):
         uploaded_file = st.file_uploader("", type=["jpg", "png", "jpeg"])
         if uploaded_file is not None:
             image = Image.open(uploaded_file)
-            st.image(image, caption="Uploaded Image", use_column_width=False, width=300)
+            st.image(image, caption="Uploaded Image", use_container_width=False, width=300)
 
     elif capture_method == "Capture image from camera":
         st.markdown('<div class="instructions">Capture an image using your webcam</div>', unsafe_allow_html=True)
         image_file = st.camera_input("Take a photo")
         if image_file:
             image = Image.open(image_file)
-            st.image(image, caption="Captured Image", use_column_width=False, width=300)
+            st.image(image, caption="Captured Image",use_container_width=False, width=300)
 
     # Proceed if image is captured or uploaded
     if image is not None:
@@ -1319,14 +1319,14 @@ def item_counting_page():
         uploaded_file = st.file_uploader("", type=["jpg", "png", "jpeg"])
         if uploaded_file is not None:
             image = Image.open(uploaded_file)
-            st.image(image, caption="Uploaded Image", use_column_width=False, width=300)
+            st.image(image, caption="Uploaded Image", use_container_width=False, width=300)
 
     elif capture_method == "Capture image from camera":
         st.markdown('<div class="instructions">Capture an image using your webcam</div>', unsafe_allow_html=True)
         image_file = st.camera_input("Take a photo")
         if image_file:
             image = Image.open(image_file)
-            st.image(image, caption="Captured Image", use_column_width=False, width=300)
+            st.image(image, caption="Captured Image", use_container_width=False, width=300)
 
     if image is not None:
         try:
@@ -1454,14 +1454,14 @@ def ocr_page():
         uploaded_file = st.file_uploader("", type=["jpg", "png", "jpeg"])
         if uploaded_file is not None:
             image = Image.open(uploaded_file)
-            st.image(image, caption="Uploaded Image", use_column_width=False, width=300)
+            st.image(image, caption="Uploaded Image", use_container_width=False, width=300)
 
     elif capture_method == "Capture image from camera":
         st.markdown('<div class="instructions">Capture an image using your webcam</div>', unsafe_allow_html=True)
         image_file = st.camera_input("Take a photo")
         if image_file:
             image = Image.open(image_file)
-            st.image(image, caption="Captured Image", use_column_width=False, width=300)
+            st.image(image, caption="Captured Image", use_container_width=False, width=300)
 
     if image is not None:
         try:
