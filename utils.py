@@ -168,11 +168,48 @@ def bread_freshness(image):
     return analyze_image_with_prompt(image, prompt)
 
 def count_cart_items(image):
-    prompt = '''Here is an image not specifically shopping cart in this image u need to give the list all the products present here.
-      
-      (e.g., fruits, vegetables, packaged goods , essentials etc.) and categorize them accordingly. Keep the response concise.
-      Just give the list of items  u donot know just give empty array but dont give extra info also write the name of the fruit , vegetable etc is their I need in json as key value pairs Fruits , Vegetables , Packed Goods , Beverages , Bakery Essentials as the key and tje items as value in json format
-      '''
+    prompt = '''
+    Analyze the provided image and list all the products present. Categorize them into the following categories:
+    - Fruits
+    - Vegetables
+    - Packed Goods
+    - Beverages
+    - Bakery Essentials
+    - Others
+
+    For each category, provide the items along with the count of each item detected. 
+
+    **Instructions:**
+    - If an item appears multiple times, list it once with the corresponding count.
+    - If no items are detected in a category, return an empty dictionary for that category.
+    - Do not include any additional information or explanations.
+    - Ensure the output is in valid JSON format with the specified categories as keys.
+    U are not detecting all the items properly yu are lefting many items so be more precise please dont exclude any item count the items correctly if u donot know name just give name relvenat to it
+    give correct count dont hallucinate recheck before giving results
+    for eg the image igave had 2 tomatoes and 3 carrots but u are giving as 5 so be accurate
+
+    **Example Output:**
+    ```json
+    {
+        "Fruits": {
+            "Apple": 5,
+            "Banana": 3
+        },
+        "Vegetables": {
+            "Carrot": 2
+        },
+        "Packed Goods": {},
+        "Beverages": {
+            "Milk": 1,
+            "Juice": 2
+        },
+        "Bakery Essentials": {
+            "Bread": 1
+        },
+        "Others": {}
+    }
+    ```
+    '''
     
     return analyze_image_with_prompt(image, prompt)
 
