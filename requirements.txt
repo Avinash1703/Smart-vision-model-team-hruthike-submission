@@ -6,7 +6,7 @@ torch==2.5.1
 torchvision==0.20.1
 openai==1.57.0
 opencv-contrib-python==4.10.0.84
-opencv-python==4.10.0.84
+opencv-python
 opencv-python-headless==4.10.0.84
 pillow
 SQLAlchemy==2.0.36
