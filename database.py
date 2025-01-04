@@ -129,6 +129,7 @@ def initialize_database():
                     packed_goods TEXT,
                     beverages TEXT,
                     bakery_essentials TEXT,
+                    others TEXT,
                     count INTEGER DEFAULT 1
                 )
             ''')
@@ -228,6 +229,7 @@ def insert_item_counting_record(items_data, total_count):
         - 'Packed Goods'
         - 'Beverages'
         - 'Bakery Essentials'
+        - 'Others'
     - total_count (int): The total number of items detected.
     """
     try:
@@ -239,6 +241,7 @@ def insert_item_counting_record(items_data, total_count):
         packed_goods = ', '.join(items_data.get('Packed Goods', [])) if 'Packed Goods' in items_data and items_data['Packed Goods'] else None
         beverages = ', '.join(items_data.get('Beverages', [])) if 'Beverages' in items_data and items_data['Beverages'] else None
         bakery_essentials = ', '.join(items_data.get('Bakery Essentials', [])) if 'Bakery Essentials' in items_data and items_data['Bakery Essentials'] else None
+        others = ', '.join(items_data.get('Others', [])) if 'Others' in items_data and items_data['Others'] else None
         
         # Insert the record with the count
         c.execute('''
@@ -248,14 +251,16 @@ def insert_item_counting_record(items_data, total_count):
                 packed_goods,
                 beverages,
                 bakery_essentials,
+                others,
                 count
-            ) VALUES (?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (
             fruits,
             vegetables,
             packed_goods,
             beverages,
             bakery_essentials,
+            others,
             total_count
         ))
         
@@ -266,6 +271,7 @@ def insert_item_counting_record(items_data, total_count):
         st.error(f"Database error while inserting item counting record: {e}")
     finally:
         conn.close()
+
 
 def insert_ocr_record(product_info):
     """
