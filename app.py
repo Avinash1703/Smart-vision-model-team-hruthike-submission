@@ -1326,29 +1326,11 @@ def item_counting_page():
 
             # Capture from camera section with custom button styling
             elif capture_method == "Capture image from camera":
-                capture_image = st.button("Capture Image", key="capture_btn", help="Click to capture an image")
-
-                # Initialize the camera feed
-                cap = cv2.VideoCapture(0)
-                st_frame = st.empty()  # Create a placeholder for the video frame
-
-                while True:
-                    ret, frame = cap.read()
-                    if not ret:
-                        st.warning("Failed to access the camera.")
-                        break
-
-                    # Convert the frame to RGB for displaying in Streamlit
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    st_frame.image(frame_rgb, channels="RGB", use_column_width=False, width=300)  # Show the camera feed
-
-                    # Check if the button was pressed
-                    if capture_image:
-                        image = Image.fromarray(frame_rgb)  # Convert to PIL image
-                        st.image(image, caption="Captured Image", use_column_width=False, width=300)  # Show captured image
-                        break
-
-                cap.release() 
+                image_file = st.camera_input("Take a photo")
+                if image_file:
+                    image = Image.open(image_file)
+                    st.image(image, caption="Captured Image",use_container_width=False, width=300)
+        
 
             
 
