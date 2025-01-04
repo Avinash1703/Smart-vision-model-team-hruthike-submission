@@ -1321,7 +1321,7 @@ def item_counting_page():
                 uploaded_file = st.file_uploader("", type=["jpg", "png", "jpeg"])  # File uploader box styling
                 if uploaded_file is not None:
                     image = Image.open(uploaded_file)
-                    st.image(image, caption="Uploaded Image", use_column_width=False, width=300)  # Adjust the image size
+                    st.image(image, caption="Uploaded Image", use_container_width=False, width=300)  # Adjust the image size
 
             # Capture from camera section with custom button styling
             elif capture_method == "Capture image from camera":
