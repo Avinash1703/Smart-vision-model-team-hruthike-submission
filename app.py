@@ -1263,131 +1263,173 @@ def freshness_detector_page(model, fruit_vegetable_mapping, freshness_mapping):
 
 # Item Counting Page
 def item_counting_page():
-    st.markdown('<div class="title">Shopping Cart Item Counter</div>', unsafe_allow_html=True)
+        if st.session_state.get("logged_in"):
+            # Title and header styling
+            st.markdown('<div class="title">Shopping Cart Item Counter</div>', unsafe_allow_html=True)
 
-    # Custom CSS for styling the upload section and buttons
-    st.markdown("""
-        <style>
-        .file-uploader {
-            border: 2px dashed #007BFF;
-            background-color: #f0f8ff;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .upload-btn, .capture-btn {
-            background-color: #4CAF50;
-            border: none;
-            color: white;
-            padding: 12px 30px;
-            text-align: center;
-            text-decoration: none;
-            font-size: 16px;
-            margin: 10px auto;
-            cursor: pointer;
-            border-radius: 8px;
-            display: inline-block;
-        }
-        .instructions {
-            font-size: 16px;
-            color: #007BFF;
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .result-box {
-            border: 2px solid #4CAF50;
-            background-color: #eaffea;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Capture Method selection with styling
-    st.markdown('<div class="instructions">Select how you would like to upload the image of the shopping cart</div>', unsafe_allow_html=True)
-    capture_method = st.selectbox("Capture Method", ["Upload an image", "Capture image from camera"])
-
-    image = None
-
-    if capture_method == "Upload an image":
-        st.markdown('<div class="file-uploader">Upload an image of the shopping cart (.jpg, .png, .jpeg)</div>', unsafe_allow_html=True)
-        uploaded_file = st.file_uploader("", type=["jpg", "png", "jpeg"])
-        if uploaded_file is not None:
-            image = Image.open(uploaded_file)
-            st.image(image, caption="Uploaded Image", use_container_width=False, width=300)
-
-    elif capture_method == "Capture image from camera":
-        st.markdown('<div class="instructions">Capture an image using your webcam</div>', unsafe_allow_html=True)
-        image_file = st.camera_input("Take a photo")
-        if image_file:
-            image = Image.open(image_file)
-            st.image(image, caption="Captured Image", use_container_width=False, width=300)
-
-    if image is not None:
-        try:
-            items_info = count_cart_items(image)  # Your function to process the image and return JSON
-
-            # Clean up the JSON string
-            items_info = items_info.replace("```json", "").replace("```", "").strip()
-
-            # Validate JSON
-            items_data = json.loads(items_info)
-
+            # Custom CSS for styling the upload section and buttons
             st.markdown("""
-                <div class='result-box'>
-                    <h3 style='color: #2E86C1; margin-bottom: 15px;'>Items Detected</h3>
-                </div>
+                <style>
+                .file-uploader {
+                    border: 2px dashed #007BFF;
+                    background-color: #f0f8ff;
+                    padding: 15px;
+                    border-radius: 10px;
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+                .upload-btn, .capture-btn {
+                    background-color: #4CAF50;
+                    border: none;
+                    color: white;
+                    padding: 12px 30px;
+                    text-align: center;
+                    text-decoration: none;
+                    font-size: 16px;
+                    margin: 10px auto;
+                    cursor: pointer;
+                    border-radius: 8px;
+                    display: inline-block;
+                }
+                .instructions {
+                    font-size: 16px;
+                    color: #007BFF;
+                    font-family: 'Arial', sans-serif;
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+                .result-box {
+                    border: 2px solid #4CAF50;
+                    background-color: #eaffea;
+                    padding: 20px;
+                    border-radius: 10px;
+                    margin-top: 20px;
+                    margin-bottom: 20px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                </style>
             """, unsafe_allow_html=True)
 
-            # Create two columns for the categories
-            col1, col2 = st.columns(2)
+            # Capture Method selection with styling
+            st.markdown('<div class="instructions">Select how you would like to upload the image of the shopping cart</div>', unsafe_allow_html=True)
+            capture_method = st.selectbox("Capture Method", ["Upload an image", "Capture image from camera"])
 
-            # Categories with their corresponding emojis
-            categories = [
-                ('Fruits', '🍎'), 
-                ('Vegetables', '🥕'), 
-                ('Packed Goods', '📦'), 
-                ('Beverages', '🥤'),
-                ('Bakery Essentials', '🥖')
-            ]
+            image = None
 
-            total_items_detected = 0  # Initialize total items count
+            # Upload image section with custom styling
+            if capture_method == "Upload an image":
+                st.markdown('<div class="file-uploader">Upload an image of the shopping cart (.jpg, .png, .jpeg)</div>', unsafe_allow_html=True)
+                uploaded_file = st.file_uploader("", type=["jpg", "png", "jpeg"])  # File uploader box styling
+                if uploaded_file is not None:
+                    image = Image.open(uploaded_file)
+                    st.image(image, caption="Uploaded Image", use_column_width=False, width=300)  # Adjust the image size
 
-            for i, (category, emoji) in enumerate(categories):
-                with col1 if i % 2 == 0 else col2:
-                    st.markdown(f"""
-                        <div style='background-color: #f8f9fa; padding: 15px; border-radius: 10px; margin: 5px;'>
-                            <h4 style='color: #34495E;'>{emoji} {category}</h4>
+            # Capture from camera section with custom button styling
+            elif capture_method == "Capture image from camera":
+                capture_image = st.button("Capture Image", key="capture_btn", help="Click to capture an image")
+
+                # Initialize the camera feed
+                cap = cv2.VideoCapture(0)
+                st_frame = st.empty()  # Create a placeholder for the video frame
+
+                while True:
+                    ret, frame = cap.read()
+                    if not ret:
+                        st.warning("Failed to access the camera.")
+                        break
+
+                    # Convert the frame to RGB for displaying in Streamlit
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    st_frame.image(frame_rgb, channels="RGB", use_column_width=False, width=300)  # Show the camera feed
+
+                    # Check if the button was pressed
+                    if capture_image:
+                        image = Image.fromarray(frame_rgb)  # Convert to PIL image
+                        st.image(image, caption="Captured Image", use_column_width=False, width=300)  # Show captured image
+                        break
+
+                cap.release() 
+
+            
+
+            if image is not None:
+                try:
+                    items_info = count_cart_items(image)  # Your function to process the image and return JSON
+                    
+                    # Clean up the JSON string if necessary
+                    items_info = items_info.replace("```json", "").replace("```", "").strip()
+                    
+                    # Parse the JSON
+                    items_data = json.loads(items_info)
+                    
+                    st.markdown("""
+                        <div class='result-box'>
+                            <h3 style='color: #2E86C1; margin-bottom: 15px;'>Items Detected</h3>
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    if category in items_data and items_data[category]:
-                        for item in items_data[category]:
+                    # Create two columns for the categories
+                    col1, col2 = st.columns(2)
+                    
+                    # Categories with their corresponding emojis
+                    categories = [
+                        ('Fruits', '🍎'), 
+                        ('Vegetables', '🥕'), 
+                        ('Packed Goods', '📦'), 
+                        ('Beverages', '🥤'),
+                        ('Bakery Essentials', '🥖'),
+                        ('Others','📦')
+                    ]
+                    
+                    total_items_detected = 0  # Initialize total items count
+                    
+                    for i, (category, emoji) in enumerate(categories):
+                        with col1 if i % 2 == 0 else col2:
                             st.markdown(f"""
-                                <div style='padding: 5px 15px; margin: 2px 0;'>
-                                    <span style='color: #2C3E50;'>• {item}</span>
+                                <div style='background-color: #f8f9fa; padding: 15px; border-radius: 10px; margin: 5px;'>
+                                    <h4 style='color: #34495E;'>{emoji} {category}</h4>
                                 </div>
                             """, unsafe_allow_html=True)
-                        # Update total items count
-                        total_items_detected += len(items_data[category])
-                    else:
-                        st.markdown("""
-                            <div style='padding: 5px 15px; color: #7F8C8D; font-style: italic;'>
-                                No items detected
-                            </div>
-                        """, unsafe_allow_html=True)
+                            
+                            if category in items_data and items_data[category]:
+                                # Determine if the category data is a list or dict
+                                if isinstance(items_data[category], list):
+                                    # Count occurrences
+                                    counts = Counter(items_data[category])
+                                elif isinstance(items_data[category], dict):
+                                    counts = items_data[category]
+                                else:
+                                    counts = {}
+                                
+                                if counts:
+                                    for item, count in counts.items():
+                                        st.markdown(f"""
+                                            <div style='padding: 5px 15px; margin: 2px 0;'>
+                                                <span style='color: #2C3E50;'>• {item} (x{count})</span>
+                                            </div>
+                                        """, unsafe_allow_html=True)
+                                        total_items_detected += count
+                                else:
+                                    st.markdown("""
+                                        <div style='padding: 5px 15px; color: #7F8C8D; font-style: italic;'>
+                                            No items detected
+                                        </div>
+                                    """, unsafe_allow_html=True)
+                            else:
+                                st.markdown("""
+                                    <div style='padding: 5px 15px; color: #7F8C8D; font-style: italic;'>
+                                        No items detected
+                                    </div>
+                                """, unsafe_allow_html=True)
 
-            # Insert the record into the database with the total count
-            insert_item_counting_record(items_data, total_items_detected)
-            st.markdown(f"<p style='font-size:16px; color:#2E86C1;'>Total Items Detected: {total_items_detected}</p>", unsafe_allow_html=True)
-
-        except Exception as e:
-            st.error(f"Error processing items: {str(e)}")
+                    # Insert the record into the database with the total count
+                    insert_item_counting_record(items_data, total_items_detected)
+                    st.markdown(f"<p style='font-size:16px; color:#2E86C1;'>Total Items Detected: {total_items_detected}</p>", unsafe_allow_html=True)
+                
+                except json.JSONDecodeError:
+                    st.error("Failed to decode JSON from the image processing function.")
+                except Exception as e:
+                    st.error(f"An error occurred: {e}")
 
 # OCR Page
 def ocr_page():
